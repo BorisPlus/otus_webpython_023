@@ -30,7 +30,7 @@ class App extends Component {
   }
 
   handle_login = (e, data) => {
-    e.preventDefault();
+   e.preventDefault();
     fetch('http://localhost:8000/token-auth/', {
       method: 'POST',
       headers: {
@@ -39,29 +39,35 @@ class App extends Component {
       body: JSON.stringify(data)
     })
     .then(
-      response => {
-        if (response.ok) {
-            const json = response.json();
-            localStorage.setItem('token', json.token);
-            this.setState({
-              logged_in: true,
-              displayed_form: '',
-              username: json.user.username,
-              errorMessage: null
-            });
-        }else{
-          this.setState({
-            errorMessage: response.statusText
-          });
-
+      responce => {
+        try {
+          const json = responce.json();
+          return json;
+        } catch (e) {
+          throw e;
         }
-      },
-      error => {
-        this.setState({
-            errorMessage: ''+error
-        });
       }
     )
+    .then(json => {
+      if(json.token) {
+        localStorage.setItem('token', json.token);
+        this.setState({
+          logged_in: true,
+          displayed_form: '',
+          username: json.user.username
+        });
+      } else {
+        this.setState({
+            errorMessage: 'Incorrect username or password.',
+        });
+      }
+    })
+    .catch( e => {
+      alert('' + e);
+      this.setState({
+        errorMessage: ''+e,
+      });
+    });
   };
 
   handle_signup = (e, data) => {
@@ -73,16 +79,27 @@ class App extends Component {
       },
       body: JSON.stringify(data)
     })
-      .then(res => res.json())
-      .then(json => {
-        localStorage.setItem('token', json.token);
-        this.setState({
-          logged_in: true,
-          displayed_form: '',
-          username: json.username,
-          errorMessage: null
-        });
-      });
+    .then(res => res.json())
+    .then(json => {
+      if (json.token) {
+          localStorage.setItem('token', json.token);
+          this.setState({
+            logged_in: true,
+            displayed_form: '',
+            username: json.username,
+            errorMessage: ''
+          });
+      } else {
+          localStorage.setItem('token', json.token);
+          this.setState({
+            logged_in: false,
+            displayed_form: '',
+            username: '',
+            errorMessage: json.username
+          });
+      }
+
+    });
   };
 
   handle_logout = () => {
